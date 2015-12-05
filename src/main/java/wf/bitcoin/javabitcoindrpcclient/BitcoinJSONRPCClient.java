@@ -274,12 +274,12 @@ public class BitcoinJSONRPCClient implements BitcoindRpcClient {
   }
   
   @Override
-  public String getinfo() throws BitcoinRpcException {
-    return ((String) query("getinfo"));
+  public Object getinfo() throws BitcoinRpcException {
+    return query("getinfo");
   }
   
   @Override
-  public Boolean move(String account1, String account2, double amount) throws BitcoinRpcException {
+  public Object move(String account1, String account2, double amount) throws BitcoinRpcException {
     return query("move", account1, account2, amount);
   }
   
