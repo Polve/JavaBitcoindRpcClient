@@ -281,6 +281,17 @@ public class BitcoinJSONRPCClient implements BitcoindRpcClient {
   public double getBalance() throws BitcoinRpcException {
     return ((Number) query("getbalance")).doubleValue();
   }
+  
+  @Override
+  public Object getinfo() throws BitcoinRpcException {
+    return query("getinfo");
+  }
+  
+  @Override
+  public Object move(String account1, String account2, double amount) throws BitcoinRpcException {
+    return query("move", account1, account2, amount);
+  }
+  
 
   @Override
   public double getBalance(String account) throws BitcoinRpcException {
