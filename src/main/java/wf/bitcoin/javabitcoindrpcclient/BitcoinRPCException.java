@@ -32,6 +32,10 @@ public class BitcoinRPCException extends BitcoinRpcException {
   private String responseMessage;
   private String response;
 
+  public String getResponseMessage() {
+    return responseMessage;
+  }
+
   /**
    * Creates a new instance of <code>BitcoinRPCException</code> with response
    * detail.
