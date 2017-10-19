@@ -792,6 +792,8 @@ public interface BitcoindRpcClient {
 
   public double getEstimateFee(int nBlocks) throws BitcoinRpcException;
 
+  public double getEstimateSmartFee(int nBlocks) throws BitcoinRpcException;
+
   public double getEstimatePriority(int nBlocks) throws BitcoinRpcException;
 
   /**
