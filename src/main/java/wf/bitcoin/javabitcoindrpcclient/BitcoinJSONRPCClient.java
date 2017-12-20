@@ -20,36 +20,20 @@
  */
 package wf.bitcoin.javabitcoindrpcclient;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.charset.Charset;
-import java.util.AbstractList;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import wf.bitcoin.krotjson.Base64Coder;
+import wf.bitcoin.krotjson.JSON;
+
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
+import java.io.*;
+import java.math.BigDecimal;
+import java.net.*;
+import java.nio.charset.Charset;
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import wf.bitcoin.krotjson.Base64Coder;
-import wf.bitcoin.krotjson.JSON;
 import static wf.bitcoin.javabitcoindrpcclient.MapWrapper.*;
 
 /**
@@ -1803,6 +1787,12 @@ public class BitcoinJSONRPCClient implements BitcoindRpcClient {
   @Override
   public double getEstimateFee(int nBlocks) throws BitcoinRpcException {
     return ((Number) query("estimatefee", nBlocks)).doubleValue();
+  }
+
+  @Override
+  public double getEstimateSmartFee(int nBlocks) throws BitcoinRpcException {
+      LinkedHashMap response = (LinkedHashMap) query("estimatesmartfee", nBlocks);
+      return (double) response.get("feerate");
   }
 
   @Override
