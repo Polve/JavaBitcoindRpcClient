@@ -22,6 +22,7 @@ package wf.bitcoin.javabitcoindrpcclient;
 
 import wf.bitcoin.krotjson.Base64Coder;
 import wf.bitcoin.krotjson.JSON;
+import wf.bitcoin.krotjson.Json;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -43,6 +44,7 @@ import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -180,21 +182,15 @@ public class BitcoinJSONRPCClient implements BitcoindRpcClient {
 
   public Object loadResponse(InputStream in, Object expectedID, boolean close) throws IOException, GenericRpcException {
     try {
-      String r = new String(loadStream(in, close), QUERY_CHARSET);
-      logger.log(Level.FINE, "Bitcoin JSON-RPC response:\n{0}", r);
-      try {
-        Map response = (Map) JSON.parse(r);
+      Map response = Json.readFromStreamQuietly(Json.MAPPER, in, HashMap.class);
 
-        if (!expectedID.equals(response.get("id")))
-          throw new BitcoinRPCException("Wrong response ID (expected: " + String.valueOf(expectedID) + ", response: " + response.get("id") + ")");
+      if (!expectedID.equals(response.get("id")))
+        throw new BitcoinRPCException("Wrong response ID (expected: " + String.valueOf(expectedID) + ", response: " + response.get("id") + ")");
 
-        if (response.get("error") != null)
-          throw new GenericRpcException(JSON.stringify(response.get("error")));
+      if (response.get("error") != null)
+        throw new GenericRpcException(JSON.stringify(response.get("error")));
 
-        return response.get("result");
-      } catch (ClassCastException ex) {
-        throw new BitcoinRPCException("Invalid server response format (data: \"" + r + "\")");
-      }
+      return response.get("result");
     } finally {
       if (close)
         in.close();

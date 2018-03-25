@@ -8,7 +8,11 @@
   <name>Java Bitcoind RPC Client</name>
   <description>A lightweight Java bitcoin JSON-RPC client binding</description>
   <url>https://github.com/Polve/JavaBitcoindRpcClient</url>
-  
+
+  <properties>
+    <jackson.version>2.9.4</jackson.version>
+  </properties>
+
   <licenses>    
     <license>
       <name>Apache License, Version 2.0</name>
@@ -37,6 +41,21 @@
   </developers>
 
   <dependencies>
+    <dependency>
+      <groupId>com.fasterxml.jackson.module</groupId>
+      <artifactId>jackson-module-afterburner</artifactId>
+      <version>${jackson.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-core</artifactId>
+      <version>${jackson.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>${jackson.version}</version>
+    </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
