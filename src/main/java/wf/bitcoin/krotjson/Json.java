@@ -47,4 +47,12 @@ public class Json {
       throw new RuntimeException(e);
     }
   }
+
+  public static <T> T readFromStringQuietly(ObjectMapper mapper, String s, Class<T> type) {
+    try {
+      return mapper.readValue(s, type);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
 }
