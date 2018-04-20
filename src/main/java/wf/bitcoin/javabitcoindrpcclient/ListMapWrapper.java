@@ -22,10 +22,6 @@ import java.util.AbstractList;
 import java.util.List;
 import java.util.Map;
 
-/**
- *
- * @author Mikhail Yevchenko m.ṥῥẚɱ.ѓѐḿởύḙ@azazar.com
- */
 abstract class ListMapWrapper<X> extends AbstractList<X> {
 
     public final List<Map> list;

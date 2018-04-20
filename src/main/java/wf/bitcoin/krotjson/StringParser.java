@@ -18,10 +18,6 @@
 
 package wf.bitcoin.krotjson;
 
-/**
- *
- * @author Mikhail Yevchenko m.ṥῥẚɱ.ѓѐḿởύḙ@azazar.com
- */
 public class StringParser {
 
     private String string;
