@@ -22,7 +22,7 @@ package wf.bitcoin.javabitcoindrpcclient;
 
 import wf.bitcoin.krotjson.Base64Coder;
 import wf.bitcoin.krotjson.JSON;
-import wf.bitcoin.krotjson.Json;
+import wf.bitcoin.krotjson.CmJson;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -182,7 +182,7 @@ public class BitcoinJSONRPCClient implements BitcoindRpcClient {
 
   public Object loadResponse(InputStream in, Object expectedID, boolean close) throws IOException, GenericRpcException {
     try {
-      Map response = Json.readFromStreamQuietly(Json.MAPPER, in, HashMap.class);
+      Map response = CmJson.readFromStreamQuietly(CmJson.MAPPER, in, HashMap.class);
 
       if (!expectedID.equals(response.get("id")))
         throw new BitcoinRPCException("Wrong response ID (expected: " + String.valueOf(expectedID) + ", response: " + response.get("id") + ")");
