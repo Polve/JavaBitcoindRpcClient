@@ -1,58 +1,139 @@
+/*
+ * KrotJSON License
+ *
+ * Copyright (c) 2013, Mikhail Yevchenko.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the
+ * Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject
+ * to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR
+ * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH
+ * THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package wf.bitcoin.krotjson;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
+import java.util.Date;
+import java.util.Map;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+/**
+ *
+ * @author Mikhail Yevchenko
+ */
+public class JSON {
 
-public class Json {
-  public static final ObjectMapper MAPPER = new ObjectMapper();
-
-  static {
-    MAPPER.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-    MAPPER.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY); // allow Jackson to see private fields
-    MAPPER.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
-    MAPPER.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false);
-    MAPPER.registerModule(new AfterburnerModule());
+  public static String stringify(Object o) {
+    if (o == null)
+      return "null";
+    if ((o instanceof Number) || (o instanceof Boolean))
+      return String.valueOf(o);
+    if (o instanceof Date)
+      return "new Date("+((Date)o).getTime()+")";
+    if (o instanceof Map)
+      return stringify((Map)o);
+    if (o instanceof Iterable)
+      return stringify((Iterable)o);
+    if (o instanceof Object[])
+      return stringify((Object[])o);
+    return stringify(String.valueOf(o));
   }
 
-  public static <T> String writeToStringQuietly(ObjectMapper mapper, T item) {
-    try {
-      return mapper.writeValueAsString(item);
-    } catch (JsonProcessingException e) {
-      throw new RuntimeException(e);
+  public static String stringify(Map m) {
+    StringBuilder b = new StringBuilder();
+    b.append('{');
+    boolean first = true;
+    for (Map.Entry e : ((Map<Object, Object>)m).entrySet()) {
+      if (first)
+        first = false;
+      else
+        b.append(",");
+      b.append(stringify(e.getKey().toString()));
+      b.append(':');
+      b.append(stringify(e.getValue()));
+
     }
+    b.append('}');
+    return b.toString();
   }
 
-  public static <T> void writeToStreamQuietly(ObjectMapper mapper, T item, OutputStream os) {
-    try {
-      mapper.writeValue(os, item);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+  public static String stringify(Iterable c) {
+    StringBuilder b = new StringBuilder();
+    b.append('[');
+    boolean first = true;
+    for (Object o : c) {
+      if (first)
+        first = false;
+      else
+        b.append(",");
+      b.append(stringify(o));
     }
+    b.append(']');
+    return b.toString();
   }
 
-  public static <T> T readFromStreamQuietly(ObjectMapper mapper, InputStream is, Class<T> type) {
-    try {
-      return mapper.readValue(is, type);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+  public static String stringify(Object[] c) {
+    StringBuilder b = new StringBuilder();
+    b.append('[');
+    boolean first = true;
+    for (Object o : c) {
+      if (first)
+        first = false;
+      else
+        b.append(",");
+      b.append(stringify(o));
     }
+    b.append(']');
+    return b.toString();
   }
 
-  public static <T> T readFromStringQuietly(ObjectMapper mapper, String s, Class<T> type) {
-    try {
-      return mapper.readValue(s, type);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+  public static String stringify(String s) {
+    StringBuilder b = new StringBuilder(s.length() + 2);
+    b.append('"');
+    for(; !s.isEmpty(); s = s.substring(1)) {
+      char c = s.charAt(0);
+      switch (c) {
+        case '\t':
+          b.append("\\t");
+          break;
+        case '\r':
+          b.append("\\r");
+          break;
+        case '\n':
+          b.append("\\n");
+          break;
+        case '\f':
+          b.append("\\f");
+          break;
+        case '\b':
+          b.append("\\b");
+          break;
+        case '"':
+        case '\\':
+          b.append("\\");
+          b.append(c);
+          break;
+        default:
+          b.append(c);
+      }
     }
+    b.append('"');
+    return b.toString();
   }
+
+  public static Object parse(String s) {
+    return CrippledJavaScriptParser.parseJSExpr(s);
+  }
+
+//    public static void main(String[] args) {
+//        String test =
+//                  "[ { 'x': 'y', 'y': 'z', id: 'value' }, { 1:2 }, {3:2, 4:[null,1,2,3,null,-1,111,-111,null]} ];";
+//        System.out.println(stringify(parse(test)));
+//        System.out.println(stringify(new Object[] {1,2,3,"asd"}));
+//    }
+
 }
