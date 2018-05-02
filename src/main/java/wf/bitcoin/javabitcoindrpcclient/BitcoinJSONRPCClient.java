@@ -1702,6 +1702,11 @@ public class BitcoinJSONRPCClient implements BitcoindRpcClient {
     return (String) query("sendtoaddress", toAddress, amount, comment, commentTo);
   }
 
+  @Override
+  public String sendToAddress(String toAddress, double amount, String comment, String commentTo, Boolean subtractFeeFromAmount) throws GenericRpcException {
+    return (String) query("sendtoaddress", toAddress, amount, comment, commentTo);
+  }
+
   public String signRawTransaction(String hex) throws GenericRpcException {
     return signRawTransaction(hex, null, null, "ALL");
   }

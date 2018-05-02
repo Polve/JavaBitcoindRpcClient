@@ -755,6 +755,8 @@ public interface BitcoindRpcClient {
    */
   public String sendToAddress(String toAddress, double amount, String comment, String commentTo) throws GenericRpcException;
 
+  public String sendToAddress(String toAddress, double amount, String comment, String commentTo, Boolean subtractFeeFromAmount) throws GenericRpcException;
+
   public String signRawTransaction(String hex, List<ExtendedTxInput> inputs, List<String> privateKeys) throws GenericRpcException;
 
   public static interface AddressValidationResult extends Serializable {
