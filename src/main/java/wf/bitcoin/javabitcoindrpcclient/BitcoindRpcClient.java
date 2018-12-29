@@ -903,6 +903,19 @@ public interface BitcoindRpcClient {
    * @see <a href="https://bitcoin.org/en/developer-reference#listsinceblock">listsinceblock</a>
    */
   TransactionsSinceBlock listSinceBlock(String blockHash, int targetConfirmations) throws GenericRpcException;
+  
+  /**
+   * The listsinceblock RPC gets all transactions affecting the wallet which have occurred since a particular block, plus the header hash of a block at a particular depth.
+   * 
+   * @param blockHash The hash of a block header encoded as hex in RPC byte order.
+   * @param targetConfirmations Sets the lastblock field of the results to the header hash of a block with this many confirmations.
+   * @param includeWatchonly  Include transactions to watch-only addresses.
+   * 
+   * @return An object containing an array of transactions and the lastblock field
+   * 
+   * @see <a href="https://bitcoin.org/en/developer-reference#listsinceblock">listsinceblock</a>
+   */
+  TransactionsSinceBlock listSinceBlock(String blockHash, int targetConfirmations, boolean includeWatchonly) throws GenericRpcException;
 
   /**
    * The listtransactions RPC returns the most recent transactions that affect the wallet.
