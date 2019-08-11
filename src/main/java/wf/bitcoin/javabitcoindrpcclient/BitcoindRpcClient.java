@@ -79,6 +79,15 @@ public interface BitcoindRpcClient {
    * @see <a href="https://bitcoin.org/en/developer-reference#getblock">getblock</a>
    */
   Block getBlock(String blockHash) throws GenericRpcException;
+  
+  /**
+   * The getblock (with verbosity = 2) RPC gets a block (Containing information about each transaction) with a particular header hash from the local block database either as a JSON object or as a serialized block.
+   * 
+   * @param blockHash The hash of the header of the block to get, encoded as hex in RPC byte order
+   * 
+   * @see <a href="https://bitcoin.org/en/developer-reference#getblock">getblock</a>
+   */  
+  BlockWithTxInfo getBlockWithTxInfo(String blockHash) throws GenericRpcException;
 
   /**
    * The getblock RPC gets a block with a particular header hash from the local block database as a serialized block.
@@ -1233,6 +1242,55 @@ public interface BitcoindRpcClient {
   */
  void walletPassPhrase(String passPhrase, long timeOut);
 
+ 
+ /**
+  * The scantxoutset RPC scans the unspent transaction output set for entries that match certain output descriptors.
+  * <p>
+  * Examples of output descriptors are:
+  * <ul>
+    <li>addr(&lt;address&gt;})                     Outputs whose scriptPubKey corresponds to the specified address (does not include P2PK)</li>
+    <li>raw(&lt;hex script&gt;)                    Outputs whose scriptPubKey equals the specified hex scripts</li>
+    <li>combo(&lt;pubkey&gt;)                      P2PK, P2PKH, P2WPKH, and P2SH-P2WPKH outputs for the given pubkey</li>
+    <li>pkh(&lt;pubkey&gt;)                        P2PKH outputs for the given pubkey</li>
+    <li>sh(multi(&lt;n&gt;,&lt;pubkey&gt;,&lt;pubkey&gt;,...)) P2SH-multisig outputs for the given threshold and pubkeys</li>
+    </ul>
+  * 
+  * @see <a href="https://bitcoin.org/en/developer-reference#scantxoutset">scantxoutset</a>
+  * 
+  * @param scanObjects Output descriptors
+  * @return
+  */
+ UtxoSet scanTxOutSet(List<ScanObject> scanObjects);
+
+ /**
+  * Returns the status for progress report (in %) of the current scan.
+  * 
+  * @see #scanTxOutSet(List)
+  * @return
+  * @throws GenericRpcException
+  */
+ Integer scanTxOutSetStatus() throws GenericRpcException;
+
+ /**
+  * Aborts the current scan
+  * 
+  * @see #scanTxOutSet(List)
+  * @return true when abort was successful
+  * @throws GenericRpcException
+  */
+ Boolean abortScanTxOutSet() throws GenericRpcException;
+ 
+ /**
+  * Convenience method for retrieving UTXO SET for a list of addresses.
+  * @see #scanTxOutSet(List) 
+  * @param addresses
+  * @return
+  * @throws GenericRpcException
+  */
+ public UtxoSet scanTxOutSetAddresses(List<String> addresses) throws GenericRpcException;
+ 
+
+ 
  /*
   * Zmq
   * 
@@ -1430,8 +1488,8 @@ public interface BitcoindRpcClient {
 	}
  }
 
- static interface Block extends MapWrapperType, Serializable {
-
+ 
+ static interface BlockBase<B, T> extends MapWrapperType, Serializable {
    String hash();
 
    int confirmations();
@@ -1442,9 +1500,9 @@ public interface BitcoindRpcClient {
 
    int version();
 
-   String merkleRoot();
+   List<T> tx();
 
-   List<String> tx();
+   String merkleRoot();
 
    Date time();
 
@@ -1460,11 +1518,18 @@ public interface BitcoindRpcClient {
 
    String chainwork();
 
-   Block previous() throws GenericRpcException;
+   B previous() throws GenericRpcException;
 
-   Block next() throws GenericRpcException;
+   B next() throws GenericRpcException;
  }
 
+ static interface Block extends BlockBase<Block, String>, MapWrapperType, Serializable {
+ }
+ 
+ static interface BlockWithTxInfo extends BlockBase<BlockWithTxInfo, RawTransaction>, MapWrapperType, Serializable {
+ }
+
+ 
  static interface BlockChainInfo extends MapWrapperType, Serializable {
 
    String chain();
@@ -2105,4 +2170,62 @@ public interface BitcoindRpcClient {
 	   */
 	  String error();
   }
+  
+
+  
+
+  public static interface UnspentTxOutput extends TxInput {
+
+    public String txid();
+
+    public Integer vout();
+
+    public String scriptPubKey();
+
+    public BigDecimal amount();
+
+    public int height();
+  }
+
+  public static interface UtxoSet {
+
+    public Integer searchedItems();
+
+    public BigDecimal totalAmount();
+
+    public List<UnspentTxOutput> unspents();
+  }
+
+  /**
+   * Input object for scantxoutset operation
+   */
+  @SuppressWarnings("serial")
+  public static class ScanObject implements Serializable {
+
+    private String descriptor;
+    private Integer range;
+
+    public ScanObject(String descriptor, Integer range) {
+      this.descriptor = descriptor;
+      this.range = range;
+    }
+
+    public String getDescriptor() {
+      return descriptor;
+    }
+
+    public void setDescriptor(String descriptor) {
+      this.descriptor = descriptor;
+    }
+
+    public Integer getRange() {
+      return range;
+    }
+
+    public void setRange(Integer range) {
+      this.range = range;
+    }
+
+  }
+
 }

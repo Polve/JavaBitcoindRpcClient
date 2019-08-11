@@ -39,6 +39,7 @@ import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -403,6 +404,12 @@ public class BitcoinJSONRPCClient implements BitcoindRpcClient {
   @SuppressWarnings({ "unchecked" })
   public Block getBlock(String blockHash) throws GenericRpcException {
     return new BlockMapWrapper((Map<String, ?>) query("getblock", blockHash));
+  }
+  
+  @Override
+  @SuppressWarnings({ "unchecked" })
+  public BlockWithTxInfo getBlockWithTxInfo(String blockHash) throws GenericRpcException {
+    return new BlockWithTxInfoMapWrapper((Map<String, ?>) query("getblock", blockHash, 2));
   }
 
   @Override
@@ -1060,6 +1067,50 @@ public class BitcoinJSONRPCClient implements BitcoindRpcClient {
     return new AddressUtxoList((List<Map<String, ?>>) query("getaddressutxos", address));
   }
 
+  @SuppressWarnings("unchecked")
+  @Override
+  public UtxoSet scanTxOutSet(List<ScanObject> scanObjects) throws GenericRpcException {
+	  
+	  List<Map<String, Object>>  param = new ArrayList<>();
+	  for (ScanObject obj : scanObjects) {
+		  Map<String, Object> map = new HashMap<String, Object>();
+		  map.put("desc", obj.getDescriptor());
+		  map.put("range", obj.getRange());
+		  param.add(map);
+	}
+    UtxoSetWrapper utxoWrapper = new UtxoSetWrapper((Map<String, ?>) query("scantxoutset", "start",
+    		param));
+    return utxoWrapper;
+  }
+  
+  @Override
+  @SuppressWarnings("unchecked")
+  public Integer scanTxOutSetStatus() throws GenericRpcException {
+    Map<String, ?> result = (Map<String, ?>) query("scantxoutset", "status");
+    if (result != null && result.containsKey("progress")) {
+      int progress = ((Long) result.get("progress")).intValue();
+      return progress;
+    } else {
+      return null;
+    }
+  }
+  
+  @Override
+  public Boolean abortScanTxOutSet() throws GenericRpcException {
+    return (Boolean) query("scantxoutset", "abort");
+  }
+  
+  @Override
+  public UtxoSet scanTxOutSetAddresses(List<String> addresses) throws GenericRpcException {
+    List<ScanObject> list = new ArrayList<>();
+    for (String addr : addresses) {
+      list.add(new ScanObject("addr(" + addr  + ")", null));
+    }
+    return scanTxOutSet(list);
+  }
+  
+  
+
   @SuppressWarnings("serial")
   private class AddressBalanceWrapper extends MapWrapper implements AddressBalance, Serializable
   {
@@ -1472,82 +1523,108 @@ public class BitcoinJSONRPCClient implements BitcoindRpcClient {
 		}
 	}
 
+  private abstract class BlockBaseMapWrapper extends MapWrapper {
+    private BlockBaseMapWrapper(Map<String, ?> m) {
+      super(m);
+    }
+
+    public String hash() {
+      return mapStr("hash");
+    }
+
+    public int confirmations() {
+      return mapInt("confirmations");
+    }
+
+    public int size() {
+      return mapInt("size");
+    }
+
+    public int height() {
+      return mapInt("height");
+    }
+
+    public int version() {
+      return mapInt("version");
+    }
+
+    public String merkleRoot() {
+      return mapStr("merkleroot");
+    }
+
+    public String chainwork() {
+      return mapStr("chainwork");
+    }
+
+    public Date time() {
+      return mapDate("time");
+    }
+
+    public long nonce() {
+      return mapLong("nonce");
+    }
+
+    public String bits() {
+      return mapStr("bits");
+    }
+
+    public BigDecimal difficulty() {
+      return mapBigDecimal("difficulty");
+    }
+
+    public String previousHash() {
+      return mapStr("previousblockhash");
+    }
+
+    public String nextHash() {
+      return mapStr("nextblockhash");
+    }
+  }
+  
+  private class BlockWithTxInfoMapWrapper extends BlockBaseMapWrapper implements BlockWithTxInfo, Serializable {
+
+    private BlockWithTxInfoMapWrapper(Map<String, ?> m) {
+      super(m);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public List<RawTransaction> tx() {
+      List<Map<String, ?>> txList = (List<Map<String, ?>>) m.get("tx");
+      List<RawTransaction> transactions = new LinkedList<RawTransaction>();
+      for (Map<String, ?> m : txList) {
+        RawTransactionImpl tx = new RawTransactionImpl(m);
+        transactions.add(tx);
+      }
+      return transactions;
+    }
+
+    @Override
+    public BlockWithTxInfo previous() throws GenericRpcException {
+      if (!m.containsKey("previousblockhash"))
+        return null;
+      return getBlockWithTxInfo(previousHash());
+    }
+
+    @Override
+    public BlockWithTxInfo next() throws GenericRpcException {
+      if (!m.containsKey("nextblockhash"))
+        return null;
+      return getBlockWithTxInfo(nextHash());
+    }
+  }
+  
   @SuppressWarnings("serial")
-  private class BlockMapWrapper extends MapWrapper implements Block, Serializable {
+  private class BlockMapWrapper extends BlockBaseMapWrapper implements Block, Serializable {
 
     private BlockMapWrapper(Map<String, ?> m) {
       super(m);
     }
 
     @Override
-    public String hash() {
-      return mapStr("hash");
-    }
-
-    @Override
-    public int confirmations() {
-      return mapInt("confirmations");
-    }
-
-    @Override
-    public int size() {
-      return mapInt("size");
-    }
-
-    @Override
-    public int height() {
-      return mapInt("height");
-    }
-
-    @Override
-    public int version() {
-      return mapInt("version");
-    }
-
-    @Override
-    public String merkleRoot() {
-      return mapStr("merkleroot");
-    }
-
-    @Override
-    public String chainwork() {
-      return mapStr("chainwork");
-    }
-
-    @Override
     @SuppressWarnings("unchecked")
     public List<String> tx() {
       return (List<String>) m.get("tx");
-    }
-
-    @Override
-    public Date time() {
-      return mapDate("time");
-    }
-
-    @Override
-    public long nonce() {
-      return mapLong("nonce");
-    }
-
-    @Override
-    public String bits() {
-      return mapStr("bits");
-    }
-
-    @Override
-    public BigDecimal difficulty() {
-      return mapBigDecimal("difficulty");
-    }
-
-    @Override
-    public String previousHash() {
-      return mapStr("previousblockhash");
-    }
-
-    @Override
-    public String nextHash() {
-      return mapStr("nextblockhash");
     }
 
     @Override
@@ -2800,4 +2877,70 @@ public class BitcoinJSONRPCClient implements BitcoindRpcClient {
 			return mapStr("purpose");
 		}
 	}
+
+  
+  @SuppressWarnings("serial")
+  private class UnspentTxOutputWrapper extends MapWrapper implements UnspentTxOutput, Serializable {
+
+    private UnspentTxOutputWrapper(Map<String, ?> m) {
+      super(m);
+    }
+
+    @Override
+    public String txid() {
+      return mapStr("txid");
+    }
+
+    @Override
+    public Integer vout() {
+      return mapInt("vout");
+    }
+
+    @Override
+    public String scriptPubKey() {
+      return mapStr("scriptPubKey");
+    }
+
+    @Override
+    public BigDecimal amount() {
+      return mapBigDecimal("amount");
+    }
+
+    @Override
+    public int height() {
+      return mapInt("height");
+    }
+  }
+
+  @SuppressWarnings("serial")
+  private class UtxoSetWrapper extends MapWrapper implements UtxoSet, Serializable {
+
+    private UtxoSetWrapper(Map<String, ?> m) {
+      super(m);
+    }
+
+
+    @Override
+    public Integer searchedItems() {
+      return mapInt("searched_items");
+    }
+
+    @Override
+    public BigDecimal totalAmount() {
+      return mapBigDecimal("total_amount");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public List<UnspentTxOutput> unspents() {
+      List<Map<String, ?>> maps = (List<Map<String, ?>>) m.get("unspents");
+      List<UnspentTxOutput> addresses = new LinkedList<UnspentTxOutput>();
+      for (Map<String, ?> m : maps) {
+        UnspentTxOutputWrapper add = new UnspentTxOutputWrapper(m);
+        addresses.add(add);
+      }
+      return addresses;
+    }
+  }
+
 }
