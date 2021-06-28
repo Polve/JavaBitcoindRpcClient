@@ -854,6 +854,14 @@ public interface BitcoindRpcClient {
   void importPrivKey(String bitcoinPrivKey, String account, boolean rescan) throws GenericRpcException;
 
   /**
+   * Rescan the local blockchain for wallet related transactions. This method
+   * without argument rescan all the blocks.
+   *
+   * @see <a href="https://bitcoincore.org/en/doc/0.20.0/rpc/wallet/rescanblockchain/">rescanblockchain</a>
+   */
+  void rescanBlockchain() throws GenericRpcException;
+
+  /**
    * The importwallet RPC imports private keys from a file in wallet dump file format (see the dumpwallet RPC). 
    * These keys will be added to the keys currently in the wallet.
    *  

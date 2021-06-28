@@ -77,7 +77,6 @@ public class BitcoinJSONRPCClient implements BitcoindRpcClient {
 
   public static final Charset QUERY_CHARSET = Charset.forName("ISO8859-1");
   public static final int CONNECT_TIMEOUT = (int) TimeUnit.MINUTES.toMillis(1);
-  public static final int READ_TIMEOUT = (int) TimeUnit.MINUTES.toMillis(5);
 
   static {
     String user = "user";
@@ -205,6 +204,8 @@ public class BitcoinJSONRPCClient implements BitcoindRpcClient {
   private SSLSocketFactory sslSocketFactory;
   private URL noAuthURL;
   private String authStr;
+
+  public int readTimeout = (int) TimeUnit.MINUTES.toMillis(5);
 
   public BitcoinJSONRPCClient(String rpcUrl) throws MalformedURLException {
     this(new URL(rpcUrl));
@@ -349,7 +350,7 @@ public class BitcoinJSONRPCClient implements BitcoindRpcClient {
       conn.setDoInput(true);
 
       conn.setConnectTimeout(CONNECT_TIMEOUT);
-      conn.setReadTimeout(READ_TIMEOUT);
+      conn.setReadTimeout(readTimeout);
 
       if (conn instanceof HttpsURLConnection) {
         if (hostnameVerifier != null)
@@ -652,6 +653,25 @@ public class BitcoinJSONRPCClient implements BitcoindRpcClient {
   @Override
   public void importPrivKey(String bitcoinPrivKey, String label, boolean rescan) throws GenericRpcException {
     query("importprivkey", bitcoinPrivKey, label, rescan);
+  }
+
+  /**
+   * Rescan the local blockchain for wallet related transactions. This method
+   * without argument rescan all the blocks.
+   * The read timeout is set to half a day. because this method take a while. It
+   * depends on hardware and blockchain size. Original timeout is restore after
+   * the query.
+   *
+   * @see <a href="https://bitcoincore.org/en/doc/0.20.0/rpc/wallet/rescanblockchain/">rescanblockchain</a>
+   * */
+  @Override
+  public void rescanBlockchain() throws GenericRpcException {
+    int savedReadTimeout = this.readTimeout;
+    // Change the read timeout to restore it after
+    this.readTimeout = (int) TimeUnit.MINUTES.toMillis(720);
+    query("rescanblockchain");
+    // Restore the previous timeout
+    this.readTimeout = savedReadTimeout;
   }
 
   @Override
